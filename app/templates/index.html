@@ -58,6 +58,7 @@
       <th>% сухости</th>
       <th>Артефакты</th>
       <th>Описание</th>
+      <th>Сезон</th>
     </tr>
   </thead>
   <tbody></tbody>
@@ -73,6 +74,7 @@ const statusDiv = document.getElementById('status');
 
 // Генерируем случайный цвет
 function getRandomColor() {
+  return '#ff55cc'
   const letters = '0123456789ABCDEF';
   let color = '#';
   for (let i = 0; i < 6; i++) {
@@ -107,11 +109,16 @@ uploadBtn.addEventListener('click', async () => {
     canvas.height = img.height;
     ctx.drawImage(img, 0, 0);
     treeTableBody.innerHTML = '';
+    
+    if (!data.trees.length) {
+      alert('Подходящих деревьев не обнаружено')
+    }
+
     data.trees.forEach(tree => {
-      const [x1, y1, x2, y2] = tree.coord;
+      const [x1, y1, x2, y2] = tree.bbox;
       const color = getRandomColor();
       ctx.strokeStyle = color;
-      ctx.lineWidth = 5;
+      ctx.lineWidth = 10;
       ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
 
       const tr = document.createElement('tr');
@@ -123,6 +130,7 @@ uploadBtn.addEventListener('click', async () => {
         <td>${tree.percentage_dried}%</td>
         <td>${tree.artifacts.join(', ')}</td>
         <td>${tree.description}</td>
+        <td>${tree.season}</td>
       `;
       treeTableBody.appendChild(tr);
     });

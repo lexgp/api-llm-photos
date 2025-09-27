@@ -1,4 +1,7 @@
+import io
 import os
+import base64
+
 from uuid import uuid4
 from pathlib import Path
 from PIL import Image
@@ -51,3 +54,35 @@ def resize_image(image_path: Path, size: Tuple[int, int] = TARGET_SIZE) -> Path:
         new_img.save(resized_path, format="JPEG")
 
     return resized_path
+
+def resize_to_square(image: Image.Image, size: int = 1024) -> Image.Image:
+    # масштабируем картинку с сохранением пропорций
+    image.thumbnail((size, size), Image.Resampling.LANCZOS)
+    # создаём квадратный холст
+    new_img = Image.new("RGB", (size, size), (0, 0, 0))
+    # вставляем в центр
+    offset = ((size - image.width) // 2, (size - image.height) // 2)
+    new_img.paste(image, offset)
+    return new_img
+
+async def get_base64_image(file: UploadFile):
+        # читаем байты
+    file_bytes = await file.read()
+
+    # открываем картинку
+    try:
+        image = Image.open(io.BytesIO(file_bytes))
+    except Exception:
+        raise Exception("Некорректный формат изображения")
+
+    # приводим к 1024×1024 с паддингами
+    image_resized = resize_to_square(image, 1024)
+
+    # сохраняем в JPEG в память
+    buffer = io.BytesIO()
+    image_resized.save(buffer, format="JPEG", quality=95)
+    buffer.seek(0)
+
+    # кодируем в base64
+    b64_str = base64.b64encode(buffer.read()).decode("utf-8")
+    return f"data:image/jpeg;base64,{b64_str}"
